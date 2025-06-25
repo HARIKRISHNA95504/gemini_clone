@@ -17,38 +17,50 @@ const ContextProvider = (props) => {
         setResultData(prev=>prev+nextWord);
     },75*index)
   }
+
   const onSent = async (prompt) => {
-    try {
-        setResultData("")
-        setLoading(true)
-        setShowResult(true)
-        setRecentPrompt(prompt)
-        setPrevPrompts(prev=>[...prev,input])
-      const response = await main(prompt);
-      let responseArray = response.split("**");
-      let newResponse="";
-      for(let i=0;i<responseArray.length;i++){
-        if(i===0||i%2 !==1){
-          newResponse += responseArray[i];
-        }else{
-          newResponse +="<b>"+responseArray[i]+"</b>"
-        }
+  try {
+    setResultData("");
+    setLoading(true);
+    setShowResult(true);
+
+    const finalPrompt = prompt ?? input; 
+    if (!finalPrompt || finalPrompt.trim() === "") return;
+
+    setPrevPrompts(prev => {
+      return prev.includes(finalPrompt) ? prev : [...prev, finalPrompt];
+    });
+
+    setRecentPrompt(finalPrompt);
+    const response = await main(finalPrompt);
+
+    
+    let responseArray = response.split("**");
+    let newResponse = "";
+    for (let i = 0; i < responseArray.length; i++) {
+      if (i === 0 || i % 2 !== 1) {
+        newResponse += responseArray[i];
+      } else {
+        newResponse += "<b>" + responseArray[i] + "</b>";
       }
-      let newResponse2 = newResponse.split("*").join("</br>")
-      // setResultData(newResponse2)
-      let newResponseArray = newResponse2.split(" ");
-      for(let i=0;i<newResponseArray.length;i++){
-        const nextWord = newResponseArray[i]
-        delayPara(i,nextWord +" ")
-      }
-      setLoading(false)
-      setInput("")
-      console.log(newResponse2)
-      return response;
-    } catch (error) {
-      console.error("Error fetching from Gemini:", error);
     }
-  };
+    let newResponse2 = newResponse.split("*").join("</br>");
+    let newResponseArray = newResponse2.split(" ");
+    for (let i = 0; i < newResponseArray.length; i++) {
+      const nextWord = newResponseArray[i];
+      delayPara(i, nextWord + " ");
+    }
+
+    setLoading(false);
+    setInput("");
+    return response;
+
+  } catch (error) {
+    console.error("Error fetching from Gemini:", error);
+    setLoading(false);
+  }
+};
+
 
   const contextValue = {
     prevPrompts,
